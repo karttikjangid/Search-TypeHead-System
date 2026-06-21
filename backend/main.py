@@ -6,7 +6,7 @@ from data.loader import load_trie
 import os
 import threading
 import time
-
+from cache.hash_ring import HashRing
 BASE_DIR = os.path.dirname(__file__)
 from db.store import init_db, get_all_counts, flush_counts
 from state import app_state
@@ -30,6 +30,8 @@ async def lifespan(app:FastAPI):
     init_db()
     app_state["trie"] = load_trie(os.path.join(BASE_DIR, "..", "data", "search_queries_dataset.csv"))
     app_state["counts"] = get_all_counts()
+    app_state["cache"] = HashRing(nodes=["node1", "node2", "node3"])  # ← add this
+    start_flush_thread(interval_seconds=30)
     print("Trie loaded..")
     yield
     flush_counts(app_state["counts"])  # final flush 

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# SQLite — generated at runtime
+*.db
+
+# Large dataset files
+data/*.csv
+
+# Node / frontend
+node_modules/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Graphify output
+graphify-out/
