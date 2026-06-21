@@ -1,122 +1,113 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import SearchBar from './components/SearchBar'
+import Suggestions from './components/Suggestions'
+import Trending from './components/Trending'
+import CacheDebug from './components/CacheDebug'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+const s = {
+  app: {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
+    padding: '0 32px',
+    maxWidth: '1120px',
+    margin: '0 auto',
+    width: '100%',
+  },
+  header: {
+    padding: '28px 0 24px',
+    borderBottom: '1px solid #2A2A2A',
+    marginBottom: '32px',
+  },
+  title: { fontSize: '18px', fontWeight: '600', color: '#FFFFFF', letterSpacing: '-0.3px' },
+  accent: { color: '#6C63FF' },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 300px',
+    gap: '32px',
+    flex: 1,
+  },
+  left: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  right: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  searchArea: { position: 'relative' },
 }
 
-export default App
+export default function App() {
+  const [suggestions, setSuggestions] = useState([])
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function fetchSuggestions(prefix) {
+    if (!prefix) {
+      setSuggestions([])
+      setError(null)
+      return
+    }
+    setIsLoading(true)
+    try {
+      const res = await fetch(`/suggest?q=${encodeURIComponent(prefix)}`)
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setSuggestions(data.suggestions || [])
+      setError(null)
+    } catch {
+      setError('Failed to fetch suggestions')
+      setSuggestions([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function submitSearch(query) {
+    if (!query.trim()) return
+    setSuggestions([])
+    setHighlightedIndex(-1)
+    try {
+      await fetch('/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim() }),
+      })
+    } catch {
+      // fire-and-forget
+    }
+  }
+
+  return (
+    <div style={s.app}>
+      <header style={s.header}>
+        <span style={s.title}>
+          <span style={s.accent}>TypeHead</span> Search
+        </span>
+      </header>
+
+      <div style={s.grid}>
+        <div style={s.left}>
+          <div style={s.searchArea}>
+            <SearchBar
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              onHighlightChange={setHighlightedIndex}
+              onFetch={fetchSuggestions}
+              onSubmit={submitSearch}
+              onClose={() => { setSuggestions([]); setHighlightedIndex(-1) }}
+              isLoading={isLoading}
+              error={error}
+            />
+            <Suggestions
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              onSelect={submitSearch}
+            />
+          </div>
+          <CacheDebug />
+        </div>
+
+        <div style={s.right}>
+          <Trending />
+        </div>
+      </div>
+    </div>
+  )
+}
