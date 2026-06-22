@@ -43,7 +43,7 @@ const s = {
   score: { color: '#888888', fontSize: '11px', flexShrink: 0, fontVariantNumeric: 'tabular-nums' },
 }
 
-export default function Trending() {
+export default function Trending({ refreshKey = 0 }) {
   const [items, setItems] = useState([])
 
   function load() {
@@ -58,6 +58,10 @@ export default function Trending() {
     const id = setInterval(load, 30000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (refreshKey > 0) load()
+  }, [refreshKey])
 
   return (
     <div style={s.card}>

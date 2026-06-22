@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 
 const s = {
   wrapper: { display: 'flex', flexDirection: 'column', gap: '8px' },
@@ -36,7 +36,7 @@ const s = {
   error: { fontSize: '12px', color: '#FF6B6B', paddingLeft: '2px' },
 }
 
-export default function SearchBar({
+const SearchBar = forwardRef(function SearchBar({
   suggestions,
   highlightedIndex,
   onHighlightChange,
@@ -45,12 +45,24 @@ export default function SearchBar({
   onClose,
   isLoading,
   error,
-}) {
+}, ref) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
   const debounceRef = useRef(null)
+  const lastSubmittedRef = useRef(null)
+
+  useImperativeHandle(ref, () => ({
+    setValue(val) {
+      lastSubmittedRef.current = val
+      setQuery(val)
+    },
+  }))
 
   useEffect(() => {
+    if (query === lastSubmittedRef.current) {
+      lastSubmittedRef.current = null
+      return
+    }
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => onFetch(query), 300)
     return () => clearTimeout(debounceRef.current)
@@ -65,7 +77,7 @@ export default function SearchBar({
       onHighlightChange(Math.max(highlightedIndex - 1, -1))
     } else if (e.key === 'Enter') {
       const q = highlightedIndex >= 0 ? suggestions[highlightedIndex]?.query : query
-      if (q) { setQuery(q); onSubmit(q) }
+      if (q) onSubmit(q)
     } else if (e.key === 'Escape') {
       onClose()
     }
@@ -91,4 +103,6 @@ export default function SearchBar({
       {error && <span style={s.error}>{error}</span>}
     </div>
   )
-}
+})
+
+export default SearchBar

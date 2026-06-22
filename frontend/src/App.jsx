@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import SearchBar from './components/SearchBar'
 import Suggestions from './components/Suggestions'
 import Trending from './components/Trending'
@@ -37,6 +37,8 @@ export default function App() {
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [trendingKey, setTrendingKey] = useState(0)
+  const searchBarRef = useRef(null)
 
   async function fetchSuggestions(prefix) {
     if (!prefix) {
@@ -59,8 +61,9 @@ export default function App() {
     }
   }
 
-  async function submitSearch(query) {
+  async function handleSelect(query) {
     if (!query.trim()) return
+    searchBarRef.current?.setValue(query)
     setSuggestions([])
     setHighlightedIndex(-1)
     try {
@@ -72,6 +75,7 @@ export default function App() {
     } catch {
       // fire-and-forget
     }
+    setTrendingKey((k) => k + 1)
   }
 
   return (
@@ -86,11 +90,12 @@ export default function App() {
         <div style={s.left}>
           <div style={s.searchArea}>
             <SearchBar
+              ref={searchBarRef}
               suggestions={suggestions}
               highlightedIndex={highlightedIndex}
               onHighlightChange={setHighlightedIndex}
               onFetch={fetchSuggestions}
-              onSubmit={submitSearch}
+              onSubmit={handleSelect}
               onClose={() => { setSuggestions([]); setHighlightedIndex(-1) }}
               isLoading={isLoading}
               error={error}
@@ -98,14 +103,14 @@ export default function App() {
             <Suggestions
               suggestions={suggestions}
               highlightedIndex={highlightedIndex}
-              onSelect={submitSearch}
+              onSelect={handleSelect}
             />
           </div>
           <CacheDebug />
         </div>
 
         <div style={s.right}>
-          <Trending />
+          <Trending refreshKey={trendingKey} />
         </div>
       </div>
     </div>
