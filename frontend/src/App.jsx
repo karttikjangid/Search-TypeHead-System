@@ -3,6 +3,7 @@ import SearchBar from './components/SearchBar'
 import Suggestions from './components/Suggestions'
 import Trending from './components/Trending'
 import CacheDebug from './components/CacheDebug'
+import Toast from './components/Toast'
 
 export default function App() {
   const [suggestions, setSuggestions] = useState([])
@@ -11,8 +12,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [trendingKey, setTrendingKey] = useState(0)
   const [debugOpen, setDebugOpen] = useState(false)
+  const [toast, setToast] = useState({ visible: false, message: '' })
   const searchBarRef = useRef(null)
   const errorTimerRef = useRef(null)
+  const toastTimerRef = useRef(null)
 
   useEffect(() => {
     function onKey(e) {
@@ -65,6 +68,12 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: query.trim() }),
       })
+      clearTimeout(toastTimerRef.current)
+      setToast({ visible: true, message: query.trim() })
+      toastTimerRef.current = setTimeout(
+        () => setToast({ visible: false, message: '' }),
+        2000,
+      )
     } catch {
       // fire-and-forget
     }
@@ -109,6 +118,7 @@ export default function App() {
         </div>
       </div>
       <CacheDebug open={debugOpen} onClose={() => setDebugOpen(false)} />
+      <Toast message={toast.message} visible={toast.visible} />
     </>
   )
 }
