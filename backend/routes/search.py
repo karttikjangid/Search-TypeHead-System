@@ -24,4 +24,12 @@ def search(body: SearchRequest):
     cutoff = now - 24 * 3600
     trending[query] = [e for e in trending[query] if e["timestamp"] >= cutoff]
 
+    counts = app_state.setdefault("counts", {})
+    counts[query] = counts.get(query, 0) + 1
+    app_state["trie"].update_count(query, counts[query])
+
+    cache = app_state["cache"]
+    for i in range(1, len(query) + 1):
+        cache.invalidate(query[:i])
+
     return {"message": "Searched"}

@@ -19,6 +19,18 @@ class Trie:
             node.suggestions = node.suggestions[:10]
             
 
+    def update_count(self, query: str, new_count: int):
+        node = self.root
+        for char in query:
+            if char not in node.children:
+                return
+            node = node.children[char]
+            node.suggestions = [
+                (q, new_count if q == query else c)
+                for q, c in node.suggestions
+            ]
+            node.suggestions.sort(key=lambda s: s[1], reverse=True)
+
     def search(self, prefix: str) -> list:
         node = self.root
         for char in prefix:

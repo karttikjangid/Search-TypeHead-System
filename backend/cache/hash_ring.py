@@ -46,6 +46,11 @@ class HashRing:
         node = self.get_node(prefix)
         node.store[prefix] = suggestions
 
+    def invalidate(self, prefix: str):
+        node = self.get_node(prefix)
+        if prefix in node.store:
+            del node.store[prefix]
+
     def debug(self, prefix: str) -> dict:
         node = self.get_node(prefix)
         hit = prefix in node.store
