@@ -1,3 +1,29 @@
+export default function Suggestions({ suggestions, highlightedIndex, onSelect }) {
+  if (!suggestions.length) return null
+
+  return (
+    <div style={s.dropdown}>
+      {suggestions.slice(0, 10).map((item, i) => {
+        const highlighted = i === highlightedIndex
+        return (
+          <div
+            key={item.query}
+            style={{
+              ...s.item,
+              background: highlighted ? '#2A2A2A' : 'transparent',
+              borderLeft: highlighted ? '2px solid #6C63FF' : '2px solid transparent',
+            }}
+            onMouseDown={(e) => { e.preventDefault(); onSelect(item.query) }}
+          >
+            <span style={s.query}>{item.query}</span>
+            <span style={s.count}>{item.count.toLocaleString()}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const s = {
   dropdown: {
     position: 'absolute',
@@ -9,35 +35,18 @@ const s = {
     borderRadius: '8px',
     overflow: 'hidden',
     zIndex: 100,
+    animation: 'suggestions-in 150ms ease forwards',
   },
   item: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '10px 14px',
+    padding: '0 14px 0 12px',
+    height: '44px',
     cursor: 'pointer',
     userSelect: 'none',
+    transition: 'background 0.1s',
   },
-  itemHighlighted: { background: '#2A2A2A' },
   query: { color: '#FFFFFF', fontSize: '14px' },
-  count: { color: '#888888', fontSize: '12px', fontVariantNumeric: 'tabular-nums' },
-}
-
-export default function Suggestions({ suggestions, highlightedIndex, onSelect }) {
-  if (!suggestions.length) return null
-
-  return (
-    <div style={s.dropdown}>
-      {suggestions.map((item, i) => (
-        <div
-          key={item.query}
-          style={{ ...s.item, ...(i === highlightedIndex ? s.itemHighlighted : {}) }}
-          onMouseDown={(e) => { e.preventDefault(); onSelect(item.query) }}
-        >
-          <span style={s.query}>{item.query}</span>
-          <span style={s.count}>{item.count.toLocaleString()}</span>
-        </div>
-      ))}
-    </div>
-  )
+  count: { color: '#555555', fontSize: '12px', fontVariantNumeric: 'tabular-nums' },
 }

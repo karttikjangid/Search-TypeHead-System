@@ -10,7 +10,7 @@ venv/
 *.db
 
 # Large dataset files
-data/*.csv
+# data/*.csv
 
 # Node / frontend
 node_modules/

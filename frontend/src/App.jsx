@@ -1,36 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import SearchBar from './components/SearchBar'
 import Suggestions from './components/Suggestions'
 import Trending from './components/Trending'
 import CacheDebug from './components/CacheDebug'
-
-const s = {
-  app: {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
-    padding: '0 32px',
-    maxWidth: '1120px',
-    margin: '0 auto',
-    width: '100%',
-  },
-  header: {
-    padding: '28px 0 24px',
-    borderBottom: '1px solid #2A2A2A',
-    marginBottom: '32px',
-  },
-  title: { fontSize: '18px', fontWeight: '600', color: '#FFFFFF', letterSpacing: '-0.3px' },
-  accent: { color: '#6C63FF' },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 300px',
-    gap: '32px',
-    flex: 1,
-  },
-  left: { display: 'flex', flexDirection: 'column', gap: '24px' },
-  right: { display: 'flex', flexDirection: 'column', gap: '24px' },
-  searchArea: { position: 'relative' },
-}
 
 export default function App() {
   const [suggestions, setSuggestions] = useState([])
@@ -38,7 +10,28 @@ export default function App() {
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [trendingKey, setTrendingKey] = useState(0)
+  const [debugOpen, setDebugOpen] = useState(false)
   const searchBarRef = useRef(null)
+  const errorTimerRef = useRef(null)
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        setDebugOpen((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  useEffect(() => {
+    if (error) {
+      clearTimeout(errorTimerRef.current)
+      errorTimerRef.current = setTimeout(() => setError(null), 3000)
+    }
+    return () => clearTimeout(errorTimerRef.current)
+  }, [error])
 
   async function fetchSuggestions(prefix) {
     if (!prefix) {
@@ -54,7 +47,7 @@ export default function App() {
       setSuggestions(data.suggestions || [])
       setError(null)
     } catch {
-      setError('Failed to fetch suggestions')
+      setError('Could not fetch suggestions')
       setSuggestions([])
     } finally {
       setIsLoading(false)
@@ -79,40 +72,57 @@ export default function App() {
   }
 
   return (
-    <div style={s.app}>
-      <header style={s.header}>
-        <span style={s.title}>
-          <span style={s.accent}>TypeHead</span> Search
-        </span>
-      </header>
-
-      <div style={s.grid}>
-        <div style={s.left}>
-          <div style={s.searchArea}>
-            <SearchBar
-              ref={searchBarRef}
-              suggestions={suggestions}
-              highlightedIndex={highlightedIndex}
-              onHighlightChange={setHighlightedIndex}
-              onFetch={fetchSuggestions}
-              onSubmit={handleSelect}
-              onClose={() => { setSuggestions([]); setHighlightedIndex(-1) }}
-              isLoading={isLoading}
-              error={error}
-            />
-            <Suggestions
-              suggestions={suggestions}
-              highlightedIndex={highlightedIndex}
-              onSelect={handleSelect}
-            />
+    <>
+      <div className="page-layout">
+        <div className="main-grid">
+          <div className="left-col">
+            <div>
+              <h1 style={s.title}>
+                <span style={s.accent}>TypeHead</span>
+                <span style={s.titleWhite}> Search</span>
+              </h1>
+              <p style={s.subtitle}>Fast prefix search across 40k queries</p>
+            </div>
+            <div style={s.searchArea}>
+              <SearchBar
+                ref={searchBarRef}
+                suggestions={suggestions}
+                highlightedIndex={highlightedIndex}
+                onHighlightChange={setHighlightedIndex}
+                onFetch={fetchSuggestions}
+                onSubmit={handleSelect}
+                onClose={() => { setSuggestions([]); setHighlightedIndex(-1) }}
+                onErrorDismiss={() => setError(null)}
+                isLoading={isLoading}
+                error={error}
+              />
+              <Suggestions
+                suggestions={suggestions}
+                highlightedIndex={highlightedIndex}
+                onSelect={handleSelect}
+              />
+            </div>
           </div>
-          <CacheDebug />
-        </div>
-
-        <div style={s.right}>
-          <Trending refreshKey={trendingKey} />
+          <div className="right-col">
+            <Trending refreshKey={trendingKey} />
+          </div>
         </div>
       </div>
-    </div>
+      <CacheDebug open={debugOpen} onClose={() => setDebugOpen(false)} />
+    </>
   )
+}
+
+const s = {
+  title: {
+    fontSize: '32px',
+    fontWeight: '600',
+    lineHeight: 1.2,
+    letterSpacing: '-0.5px',
+    marginBottom: '8px',
+  },
+  accent: { color: '#6C63FF' },
+  titleWhite: { color: '#FFFFFF' },
+  subtitle: { color: '#888888', fontSize: '14px', fontWeight: '400' },
+  searchArea: { position: 'relative' },
 }
