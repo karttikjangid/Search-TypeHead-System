@@ -25,7 +25,11 @@ def search(body: SearchRequest):
     trending[query] = [e for e in trending[query] if e["timestamp"] >= cutoff]
 
     counts = app_state.setdefault("counts", {})
-    counts[query] = counts.get(query, 0) + 1
+
+    if query not in counts:
+        counts[query] = app_state["trie"].get_count(query)
+
+    counts[query] += 1
     app_state["trie"].update_count(query, counts[query])
 
     cache = app_state["cache"]

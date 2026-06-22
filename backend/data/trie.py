@@ -1,3 +1,5 @@
+from operator import itemgetter
+
 class TrieNode:
     def __init__(self):
         self.children = {}
@@ -15,9 +17,20 @@ class Trie:
             node = node.children[char]
             # Keep only top 10, sorted descending by count
             node.suggestions.append((query , count))
-            node.suggestions.sort(key = lambda x: x[1] , reverse= True)
+            node.suggestions.sort(key=itemgetter(1), reverse=True)
             node.suggestions = node.suggestions[:10]
             
+
+    def get_count(self, query: str) -> int:
+        node = self.root
+        for char in query:
+            if char not in node.children:
+                return 0
+            node = node.children[char]
+        for q, c in node.suggestions:
+            if q == query:
+                return c
+        return 0
 
     def update_count(self, query: str, new_count: int):
         node = self.root
@@ -29,7 +42,7 @@ class Trie:
                 (q, new_count if q == query else c)
                 for q, c in node.suggestions
             ]
-            node.suggestions.sort(key=lambda s: s[1], reverse=True)
+            node.suggestions.sort(key=itemgetter(1), reverse=True)
 
     def search(self, prefix: str) -> list:
         node = self.root
